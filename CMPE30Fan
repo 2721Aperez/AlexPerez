@@ -1,0 +1,135 @@
+#include<stdio.h>
+#include<string.h>
+#include "utilities.h"
+#include "io.hpp"
+#include "lpc_pwm.hpp"
+#include"gpio.hpp"
+
+int main()
+{
+
+	typedef enum {start, sensor, fan, end} myStateType;
+
+	myStateType currentState = start;
+
+    //GPIO fan1(P2_0);
+	//fan1.setAsOutput();
+	//fan1.setLow();
+
+
+	while(1) {
+
+		delay_ms(100);
+
+		int temp = TS.getFarenheit();
+
+		bool sw1_press = SW.getSwitch(1);
+		bool sw2_press = SW.getSwitch(2);
+		bool sw3_press = SW.getSwitch(3);
+
+
+		switch(currentState)
+		{
+		case start:
+			//fan1.setLow();
+
+			if(sw1_press)
+			{
+				currentState = sensor;
+				puts("Sensor Mode \n");
+				delay_ms(100);
+
+			}
+
+			break;
+		case sensor:
+		{
+			//fan1.setLow();
+
+			LD.setNumber(temp);
+
+			printf("The temperature value is %i \n",temp);
+
+			delay_ms(100);
+
+			if(sw2_press)
+			{
+				currentState = fan;
+				puts("Fan Mode \n");
+				delay_ms(100);
+			}
+
+			break;
+		}
+
+		case fan:
+
+			LD.setNumber(temp);
+
+			if(temp<30)
+			{
+				//fan1.setHigh();
+				PWM servo1(PWM::pwm2, 100);
+
+				servo1.set(10.0);
+
+				printf("Temperature is %i \n", temp);
+			}
+
+			else if(temp>=40 && temp<=70)
+			{
+				//fan1.setHigh();
+				PWM servo1(PWM::pwm2, 100);
+
+				servo1.set(50.0);
+
+				printf("Temperature is %i \n", temp);
+			}
+			else if(temp>=70 && temp<=80)
+			{
+				//fan1.setHigh();
+				PWM servo1(PWM::pwm2, 1000);
+
+				servo1.set(20.0);
+
+				printf("The Temperature is %i \n", temp);
+			}
+			else if(temp>=80 && temp <= 100)
+			{
+				//fan1.setHigh();
+				PWM servo1(PWM::pwm2, 100);
+
+				servo1.set(100.0);
+
+				printf("Temperature is %i \n", temp);
+			}
+
+			if(sw2_press)
+			{
+				currentState = sensor;
+				printf("Sensor Mode \n");
+				delay_ms(100);
+			}
+			else if(sw3_press)
+			{
+				currentState = end;
+			}
+
+			break;
+
+		case end:
+
+			//fan1.setLow();
+			return 0;
+
+			break;
+
+		default:
+			printf("ERROR!\n");
+		}
+
+	}
+}
+
+
+
